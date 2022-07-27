@@ -198,7 +198,6 @@ public class ProductActivity extends AppCompatActivity {
         String productName = txtFoodName.getText().toString();
         float price = Float.valueOf(numPrice.getText().toString());
         String category = txtCategoryList.getSelectedItem().toString();
-        ArrayList<String> list = new ArrayList<>();
         totalImages.setText("Please Wait ... If Uploading takes Too much time please the button again ");
         final StorageReference ImageFolder = FirebaseStorage.getInstance().getReference().child("ImageFolder");
         for (int uploads = 0; uploads < imgList.size(); uploads++) {
@@ -210,6 +209,7 @@ public class ProductActivity extends AppCompatActivity {
                     imagename.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
                         @Override
                         public void onSuccess(Uri uri) {
+                            ArrayList<String> list = new ArrayList<>();
                             imgList.add(uri);
                             list.add(String.valueOf(uri));
 
