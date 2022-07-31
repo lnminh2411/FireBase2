@@ -43,7 +43,7 @@ public class SignUpActivity extends AppCompatActivity {
                 startActivity(i);
             }
         });
-        db.child(RestaurantDB.TABLE_ACCOUNT).addListenerForSingleValueEvent(new ValueEventListener() {
+        db.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
 
@@ -69,9 +69,9 @@ public class SignUpActivity extends AppCompatActivity {
                         public void onDataChange(DataSnapshot dataSnapshot) {
                             // This method is called once with the initial value and again
                             // whenever data at this location is updated.
-                            db.child(RestaurantDB.TABLE_ACCOUNT).child("id").setValue(username);
-                            db.child(RestaurantDB.TABLE_ACCOUNT).child("username").setValue(username);
-                            db.child(RestaurantDB.TABLE_ACCOUNT).child("password").setValue(password);
+                            db.child("id").setValue(username);
+                            db.child("username").setValue(username);
+                            db.child("password").setValue(password);
                             Toast.makeText(SignUpActivity.this, "Success", Toast.LENGTH_SHORT).show();
                             finish();
                         }

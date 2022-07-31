@@ -7,6 +7,11 @@ public class Product {
     private String category;
     private String[] image;
 
+    public Product(String name, float price) {
+        this.name = name;
+        this.price = price;
+    }
+
     public Product(int id, String name, float price, String category, String[] image) {
         this.id = id;
         this.name = name;

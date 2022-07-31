@@ -32,7 +32,7 @@ public class CategoryActivity extends AppCompatActivity {
         setContentView(R.layout.activity_category);
         txtCategoryName = findViewById(R.id.txtCategoryName);
         btnAddCategory = findViewById(R.id.btnAddCategory);
-        Query query = db.child(RestaurantDB.TABLE_CATEGORY).orderByKey().limitToLast(1);
+        Query query = db.orderByKey().limitToLast(1);
         query.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
@@ -52,7 +52,7 @@ public class CategoryActivity extends AppCompatActivity {
             public void onClick(View view) {
                 int categoryId = maxId+1;
                 String categoryName = txtCategoryName.getText().toString();
-                db.child(RestaurantDB.TABLE_CATEGORY).child(String.valueOf(categoryId)).child("categoryName").setValue(categoryName);
+                db.child(String.valueOf(categoryId)).child("categoryName").setValue(categoryName);
                 Toast.makeText(CategoryActivity.this, "Success", Toast.LENGTH_SHORT).show();
             }
         });

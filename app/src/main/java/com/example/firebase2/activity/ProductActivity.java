@@ -3,63 +3,53 @@ package com.example.firebase2.activity;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import android.Manifest;
 import android.app.Activity;
-import android.content.ClipData;
 import android.content.ContentResolver;
 import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.provider.MediaStore;
-import android.util.Log;
 import android.view.View;
 import android.webkit.MimeTypeMap;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.firebase2.R;
-import com.example.firebase2.TestAdapter;
 import com.example.firebase2.adapter.ProductAdapter;
 import com.example.firebase2.database.RestaurantDB;
-import com.example.firebase2.model.Product;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.android.gms.tasks.Task;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
+import com.google.firebase.database.ServerValue;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.OnProgressListener;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 public class ProductActivity extends AppCompatActivity {
     ProductAdapter adapter;
+    String category = "";
     private TextView totalImages;
     int PICK_IMAGE_MULTIPLE = 1;
     int maxId = 0;
     private int productId = 0;
-    private EditText txtFoodName;
+    private EditText txtFoodName, txtDescription;
     private Spinner txtCategoryList;
     private EditText numPrice;
     private Button btnAddFood;
@@ -69,26 +59,62 @@ public class ProductActivity extends AppCompatActivity {
     private RecyclerView recyclerView;
     FirebaseDatabase database = FirebaseDatabase.getInstance();
     DatabaseReference db = database.getReference("Food");
-    private StorageReference reference = FirebaseStorage.getInstance().getReference();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_product);
+
+        FirebaseDatabase database = FirebaseDatabase.getInstance();
+        DatabaseReference myRef = database.getReference("message");
+
+        myRef.setValue("Hello, World!");
+
         txtFoodName = findViewById(R.id.txtFoodName);
         txtCategoryList = findViewById(R.id.txtCategoryList);
+        txtDescription = findViewById(R.id.txtDescription);
         numPrice = findViewById(R.id.numPrice);
         btnAddFood = findViewById(R.id.btnAddFood);
         btnPick = findViewById(R.id.btnPick);
-        recyclerView = findViewById(R.id.recyclerView);
+        recyclerView = findViewById(R.id.food_recycler);
         totalImages = findViewById(R.id.totalImages);
+        //("Chọn thể loại","Cơm","Lẩu","Phở","Mì","Súp","Đồ Uống","Tráng miệng","Ăn nhanh","Combo");
+        categoryList.add(0, "Chọn thể loại");
+        categoryList.add("Cơm");
+        categoryList.add("Lẩu");
+        categoryList.add("Phở");
+        categoryList.add("Mì");
+        categoryList.add("Súp");
+        categoryList.add("Đồ Uống");
+        categoryList.add("Tráng miệng");
+        categoryList.add("Ăn nhanh");
+        categoryList.add("Combo");
+
+        ArrayAdapter<String> arrayAdapter = new ArrayAdapter<>(ProductActivity.this, android.R.layout.simple_spinner_item, categoryList);
+        arrayAdapter.setDropDownViewResource(android.R.layout.simple_spinner_item);
+        txtCategoryList.setAdapter(arrayAdapter);
 
         adapter = new ProductAdapter(imgList);
         LinearLayoutManager layoutManager
                 = new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false);
         recyclerView.setLayoutManager(layoutManager);
         recyclerView.setAdapter(adapter);
+        txtCategoryList.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                if (adapterView.getItemAtPosition(i).equals("Chọn thể loại")) {
+                    category = null;
+                } else {
+                    String item = adapterView.getItemAtPosition(i).toString();
+                    category = item;
+                }
+            }
 
+            @Override
+            public void onNothingSelected(AdapterView<?> adapterView) {
+
+            }
+        });
         btnPick.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -96,37 +122,22 @@ public class ProductActivity extends AppCompatActivity {
             }
         });
 
-        database.getReference("Category").child(RestaurantDB.TABLE_CATEGORY).addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                for (DataSnapshot childSnapshot : snapshot.getChildren()) {
-                    String items = childSnapshot.child("categoryName").getValue(String.class);
-                    categoryList.add(items);
-                }
-
-                ArrayAdapter<String> arrayAdapter = new ArrayAdapter<>(ProductActivity.this, android.R.layout.simple_spinner_item, categoryList);
-                arrayAdapter.setDropDownViewResource(android.R.layout.simple_spinner_item);
-                txtCategoryList.setAdapter(arrayAdapter);
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-
-            }
-        });
-        Query query = db.child(RestaurantDB.TABLE_PRODUCT).orderByKey().limitToLast(1);
+        Query query = db.orderByKey().limitToLast(1);
         query.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                for (DataSnapshot childSnapshot: snapshot.getChildren()) {
-                    System.out.println(childSnapshot.getKey());
-                    maxId = Integer.parseInt(childSnapshot.getKey());
+                for (DataSnapshot childSnapshot : snapshot.getChildren()) {
+                    try{
+                        maxId = Integer.parseInt(childSnapshot.getKey());
+                    } catch(NumberFormatException ex){ // handle your exception
+                    }
+
                 }
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-                Toast.makeText(ProductActivity.this, "Failed", Toast.LENGTH_SHORT).show();
+
             }
         });
 
@@ -166,63 +177,52 @@ public class ProductActivity extends AppCompatActivity {
             totalImages.setText("You Have Selected " + imgList.size() + " Pictures");
             adapter.notifyDataSetChanged();
         } else {
-            Toast.makeText(this, "You haven't picked any images!!!", Toast.LENGTH_LONG).show();
+            totalImages.setText("You haven't picked any images!!!");
         }
     }
 
     private void uploadToFireBase(View view) {
-//        StorageReference storageReference = reference.child(System.currentTimeMillis() + "." + getFileExtension(uri));
-//        storageReference.putFile(uri).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
-//            @Override
-//            public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-//                storageReference.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
-//                    @Override
-//                    public void onSuccess(Uri uri) {
-//
-//                        //                    startActivity(new Intent(ProductActivity.this, FoodActivity.class));
-//                    }
-//                });
-//            }
-//        }).addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
-//            @Override
-//            public void onProgress(@NonNull UploadTask.TaskSnapshot snapshot) {
-//                Toast.makeText(ProductActivity.this, "Uploading in progress!!!", Toast.LENGTH_SHORT).show();
-//            }
-//        }).addOnFailureListener(new OnFailureListener() {
-//            @Override
-//            public void onFailure(@NonNull Exception e) {
-//                Toast.makeText(ProductActivity.this, "Uploading failed!!!", Toast.LENGTH_SHORT).show();
-//            }
-//        });
         productId = maxId + 1;
-        String productName = txtFoodName.getText().toString();
-        float price = Float.valueOf(numPrice.getText().toString());
-        String category = txtCategoryList.getSelectedItem().toString();
-        totalImages.setText("Please Wait ... If Uploading takes Too much time please the button again ");
-        final StorageReference ImageFolder = FirebaseStorage.getInstance().getReference().child("ImageFolder");
-        for (int uploads = 0; uploads < imgList.size(); uploads++) {
-            Uri Image = imgList.get(uploads);
-            final StorageReference imagename = ImageFolder.child(productId + "/" + System.currentTimeMillis()+"."+getFileExtension(Image));
-            imagename.putFile(imgList.get(uploads)).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
-                @Override
-                public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                    imagename.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
-                        @Override
-                        public void onSuccess(Uri uri) {
-                            ArrayList<String> list = new ArrayList<>();
-                            imgList.add(uri);
-                            list.add(String.valueOf(uri));
+        ArrayList<String> list = new ArrayList<>();
+        if (txtFoodName.getText().toString().isEmpty() || txtDescription.getText().toString().isEmpty() || numPrice.getText().toString().isEmpty()){
+            Toast.makeText(ProductActivity.this, "Can not blanked", Toast.LENGTH_SHORT).show();
+            ProductActivity.this.recreate();
+        } else if (category == null) {
+            Toast.makeText(ProductActivity.this, "Mời chọn thể loại", Toast.LENGTH_SHORT).show();
+            ProductActivity.this.recreate();
+        } else {
+            DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
+            LocalDateTime now = LocalDateTime.now();
+            String productName = txtFoodName.getText().toString();
+            String description = txtDescription.getText().toString();
+            float price = Float.valueOf(numPrice.getText().toString());
+            final StorageReference ImageFolder = FirebaseStorage.getInstance().getReference().child("ImageFolder");
+            for (int uploads = 0; uploads < imgList.size(); uploads++) {
+                Uri Image = imgList.get(uploads);
+                final StorageReference imagename = ImageFolder.child(productId + "/" + System.currentTimeMillis() + "." + getFileExtension(Image));
+                imagename.putFile(imgList.get(uploads)).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+                    @Override
+                    public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                        imagename.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+                            @Override
+                            public void onSuccess(Uri uri) {
+                                imgList.add(uri);
+                                list.add(String.valueOf(uri));
+                                list.size();
+                                db.child(String.valueOf(productId)).child("Food Name").setValue(productName);
+                                db.child(String.valueOf(productId)).child("Category").setValue(category);
+                                db.child(String.valueOf(productId)).child("Price").setValue(String.valueOf(price));
+                                db.child(String.valueOf(productId)).child("Description").setValue(description);
+                                db.child(String.valueOf(productId)).child("Image").setValue(list);
+                                db.child(String.valueOf(productId)).child("Date Add").setValue(now.toString());
+                                Toast.makeText(ProductActivity.this, "Upload Successfully!!!", Toast.LENGTH_SHORT).show();
 
-                            db.child(RestaurantDB.TABLE_PRODUCT).child(String.valueOf(productId)).child("Food Name").setValue(productName);
-                            db.child(RestaurantDB.TABLE_PRODUCT).child(String.valueOf(productId)).child("Category").setValue(category);
-                            db.child(RestaurantDB.TABLE_PRODUCT).child(String.valueOf(productId)).child("Price").setValue(String.valueOf(price));
-                            db.child(RestaurantDB.TABLE_PRODUCT).child(String.valueOf(productId)).child("Image").setValue(list);
-                            Toast.makeText(ProductActivity.this, "Upload Successfully!!!", Toast.LENGTH_SHORT).show();
-                        }
-                    });
+                            }
+                        });
 
-                }
-            });
+                    }
+                });
+            }
         }
     }
 
