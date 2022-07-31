@@ -65,10 +65,6 @@ public class ProductActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_product);
 
-        FirebaseDatabase database = FirebaseDatabase.getInstance();
-        DatabaseReference myRef = database.getReference("message");
-
-        myRef.setValue("Hello, World!");
 
         txtFoodName = findViewById(R.id.txtFoodName);
         txtCategoryList = findViewById(R.id.txtCategoryList);
@@ -216,7 +212,8 @@ public class ProductActivity extends AppCompatActivity {
                                 db.child(String.valueOf(productId)).child("Image").setValue(list);
                                 db.child(String.valueOf(productId)).child("Date Add").setValue(now.toString());
                                 Toast.makeText(ProductActivity.this, "Upload Successfully!!!", Toast.LENGTH_SHORT).show();
-
+                                finish();
+                                startActivity(getIntent());
                             }
                         });
 

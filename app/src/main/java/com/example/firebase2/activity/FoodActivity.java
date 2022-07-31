@@ -53,7 +53,7 @@ public class FoodActivity extends AppCompatActivity{
     String[] imageList={};
     int count=imageList.length;
     int currentIndex=0;
-    int productId = 46;
+    int productId = 1;
     FoodAdapter adapter;
     RecyclerView foodRecycler;
     TextView foodName, foodPrice, foodDescription;
@@ -75,7 +75,7 @@ public class FoodActivity extends AppCompatActivity{
                 = new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false);
         foodRecycler.setLayoutManager(layoutManager);
 
-        StorageReference listRef = FirebaseStorage.getInstance().getReference().child("ImageFolder").child(String.valueOf(productId));
+        StorageReference listRef = FirebaseStorage.getInstance().getReference().child("ImageFolder/").child(String.valueOf(productId));
         listRef.listAll().addOnSuccessListener(new OnSuccessListener<ListResult>() {
             @Override
             public void onSuccess(ListResult listResult) {
@@ -90,7 +90,6 @@ public class FoodActivity extends AppCompatActivity{
                         @Override
                         public void onSuccess(Uri uri) {
                             foodRecycler.setAdapter(adapter);
-
                         }
                     });
                 }

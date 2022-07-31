@@ -10,6 +10,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 
+import com.bumptech.glide.Glide;
 import com.example.firebase2.R;
 import com.example.firebase2.adapter.FoodAdapter;
 import com.example.firebase2.adapter.HomeAdapter;
@@ -32,47 +33,41 @@ import java.util.List;
 
 public class HomeActivity extends AppCompatActivity {
     Product getProduct;
-    private List<Product> productList;
+    private List<Product> productList = new ArrayList<>();
     HomeAdapter adapter;
-    int x=0;
+    int x = 0;
     int productId;
     ArrayList<String> imgList = new ArrayList<>();
     RecyclerView food_recycler;
     FirebaseDatabase database = FirebaseDatabase.getInstance();
     DatabaseReference db = database.getReference("Food");
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
         food_recycler = findViewById(R.id.food_recycler);
 
-        adapter = new HomeAdapter(productList,this);
+
+        adapter = new HomeAdapter(productList, getApplicationContext());
         LinearLayoutManager layoutManager
-                = new LinearLayoutManager(getApplicationContext(), LinearLayoutManager.HORIZONTAL, false);
+                = new LinearLayoutManager(getApplicationContext(), LinearLayoutManager.VERTICAL, false);
         food_recycler.setLayoutManager(layoutManager);
-
-
-        db.addChildEventListener(new ChildEventListener() {
+        db.orderByChild("Category").equalTo("Cơm").addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
-            public void onChildAdded(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
-                String myParentNode = snapshot.getKey();
-                for (DataSnapshot childSnapshot: snapshot.getChildren())
-                {
-                    String value = childSnapshot.getValue().toString();
-                    if (value.equals("loai 1")){
-                        productId = Integer.parseInt(myParentNode);
-                    }
-                }
-                StorageReference listRef = FirebaseStorage.getInstance().getReference().child("ImageFolder").child(String.valueOf(productId));
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                for (DataSnapshot childSnapshot : snapshot.getChildren()) {
+                    productId = Integer.parseInt(childSnapshot.getKey());
+                    StorageReference listRef = FirebaseStorage.getInstance().getReference().child("ImageFolder").child(String.valueOf(productId));
                 listRef.listAll().addOnSuccessListener(new OnSuccessListener<ListResult>() {
                     @Override
                     public void onSuccess(ListResult listResult) {
-                        for(StorageReference file:listResult.getItems()){
+                        for (StorageReference file : listResult.getItems()) {
                             file.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
                                 @Override
                                 public void onSuccess(Uri uri) {
                                     imgList.add(uri.toString());
-                                    Log.e("Itemvalue",uri.toString());
+                                    Log.e("Itemvalue", uri.toString());
                                 }
                             }).addOnSuccessListener(new OnSuccessListener<Uri>() {
                                 @Override
@@ -84,38 +79,45 @@ public class HomeActivity extends AppCompatActivity {
                         }
                     }
                 });
-                db.child(String.valueOf(productId)).addValueEventListener(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(@NonNull DataSnapshot snapshot) {
-                        for (DataSnapshot dataSnapshot : snapshot.getChildren()){
-                            String name = snapshot.child("Food Name").getValue(String.class);
-                            getProduct = new Product(snapshot.child("Food Name").getValue(String.class),Float.valueOf( snapshot.child("Price").getValue((String.class))));
+                    db.child(String.valueOf(productId)).addValueEventListener(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot snapshot) {
+                            getProduct = new Product(snapshot.child("Food Name").getValue(String.class), Float.valueOf(snapshot.child("Price").getValue(String.class)));
                             productList.add(getProduct);
+
+                            food_recycler.setAdapter(adapter);
                         }
 
-                        food_recycler.setAdapter(adapter);
-                    }
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError error) {
 
-                    @Override
-                    public void onCancelled(@NonNull DatabaseError error) {
+                        }
+                    });
 
-                    }
-                });
-            }
+                }
 
-            @Override
-            public void onChildChanged(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
 
-            }
-
-            @Override
-            public void onChildRemoved(@NonNull DataSnapshot snapshot) {
-
-            }
-
-            @Override
-            public void onChildMoved(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
-
+//                StorageReference listRef = FirebaseStorage.getInstance().getReference().child("ImageFolder").child(String.valueOf(productId));
+//                listRef.listAll().addOnSuccessListener(new OnSuccessListener<ListResult>() {
+//                    @Override
+//                    public void onSuccess(ListResult listResult) {
+//                        for (StorageReference file : listResult.getItems()) {
+//                            file.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+//                                @Override
+//                                public void onSuccess(Uri uri) {
+//                                    imgList.add(uri.toString());
+//                                    Log.e("Itemvalue", uri.toString());
+//                                }
+//                            }).addOnSuccessListener(new OnSuccessListener<Uri>() {
+//                                @Override
+//                                public void onSuccess(Uri uri) {
+//
+//
+//                                }
+//                            });
+//                        }
+//                    }
+//                });
             }
 
             @Override
@@ -124,4 +126,5 @@ public class HomeActivity extends AppCompatActivity {
             }
         });
     }
+
 }

@@ -18,10 +18,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class HomeAdapter extends RecyclerView.Adapter<HomeAdapter.MyViewHolder>{
+
     private List<Product> productList;
     private Context context;
 
     public HomeAdapter(List<Product> productList, Context context) {
+
         this.productList = productList;
         this.context = context;
     }
@@ -35,7 +37,7 @@ public class HomeAdapter extends RecyclerView.Adapter<HomeAdapter.MyViewHolder>{
 
     @Override
     public void onBindViewHolder(@NonNull MyViewHolder holder, int position) {
-        Glide.with(holder.itemView.getContext()).load(productList.get(position)).into(holder.mImage);
+        //Glide.with(holder.itemView.getContext()).load(imageList.get(position)).into(holder.mImage);
         holder.mFoodName.setText(this.productList.get(position).getName());
         holder.mFoodPrice.setText(String.valueOf(this.productList.get(position).getPrice()));
     }
