@@ -24,7 +24,7 @@ public class MainActivity extends AppCompatActivity {
         Account acc1 = new Account(1,"acc1", "123456");
         FirebaseDatabase database = FirebaseDatabase.getInstance();
         DatabaseReference myRef = database.getReference("User");
-        myRef.child(RestaurantDB.TABLE_ACCOUNT).child(String.valueOf(acc1.getId())).setValue(acc1);
+        myRef.child(String.valueOf(acc1.getId())).setValue(acc1);
 
     }
 
