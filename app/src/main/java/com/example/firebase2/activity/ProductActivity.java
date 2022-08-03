@@ -81,7 +81,7 @@ public class ProductActivity extends AppCompatActivity {
         categoryList.add("Phở");
         categoryList.add("Mì");
         categoryList.add("Súp");
-        categoryList.add("Đồ Uống");
+        categoryList.add("Đồ uống");
         categoryList.add("Tráng miệng");
         categoryList.add("Ăn nhanh");
         categoryList.add("Combo");

@@ -6,6 +6,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
@@ -33,6 +34,7 @@ import java.util.List;
 
 public class HomeActivity extends AppCompatActivity {
     Product getProduct;
+    String categoryName = "";
     private List<Product> productList = new ArrayList<>();
     HomeAdapter adapter;
     int x = 0;
@@ -48,37 +50,39 @@ public class HomeActivity extends AppCompatActivity {
         setContentView(R.layout.activity_home);
         food_recycler = findViewById(R.id.food_recycler);
 
+        Intent data = getIntent();
+        categoryName = data.getStringExtra("categoryName");
 
         adapter = new HomeAdapter(productList, getApplicationContext());
         LinearLayoutManager layoutManager
                 = new LinearLayoutManager(getApplicationContext(), LinearLayoutManager.VERTICAL, false);
         food_recycler.setLayoutManager(layoutManager);
-        db.orderByChild("Category").equalTo("Cơm").addListenerForSingleValueEvent(new ValueEventListener() {
+        db.orderByChild("Category").equalTo(categoryName).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 for (DataSnapshot childSnapshot : snapshot.getChildren()) {
                     productId = Integer.parseInt(childSnapshot.getKey());
                     StorageReference listRef = FirebaseStorage.getInstance().getReference().child("ImageFolder").child(String.valueOf(productId));
-                listRef.listAll().addOnSuccessListener(new OnSuccessListener<ListResult>() {
-                    @Override
-                    public void onSuccess(ListResult listResult) {
-                        for (StorageReference file : listResult.getItems()) {
-                            file.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
-                                @Override
-                                public void onSuccess(Uri uri) {
-                                    imgList.add(uri.toString());
-                                    Log.e("Itemvalue", uri.toString());
-                                }
-                            }).addOnSuccessListener(new OnSuccessListener<Uri>() {
-                                @Override
-                                public void onSuccess(Uri uri) {
+                    listRef.listAll().addOnSuccessListener(new OnSuccessListener<ListResult>() {
+                        @Override
+                        public void onSuccess(ListResult listResult) {
+                            for (StorageReference file : listResult.getItems()) {
+                                file.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+                                    @Override
+                                    public void onSuccess(Uri uri) {
+                                        imgList.add(uri.toString());
+                                        Log.e("Itemvalue", uri.toString());
+                                    }
+                                }).addOnSuccessListener(new OnSuccessListener<Uri>() {
+                                    @Override
+                                    public void onSuccess(Uri uri) {
+                                        food_recycler.setAdapter(adapter);
 
-
-                                }
-                            });
+                                    }
+                                });
+                            }
                         }
-                    }
-                });
+                    });
                     db.child(String.valueOf(productId)).addValueEventListener(new ValueEventListener() {
                         @Override
                         public void onDataChange(@NonNull DataSnapshot snapshot) {
